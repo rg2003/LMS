@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Library Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Library Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Candidate Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="mb-4 text-center">Library Book List</h1>
+        <div id="book-list" class="table-responsive"></div>
+
+        <h2 class="mt-5">Add a New Book</h2>
+        <form id="book-form" class="form-group mt-3">
+            <div class="mb-3">
+                <input type="text" id="title" class="form-control" placeholder="Book Title" required>
+            </div>
+            <div class="mb-3">
+                <input type="text" id="author" class="form-control" placeholder="Author" required>
+            </div>
+            <div class="mb-3">
+                <input type="date" id="due" class="form-control" placeholder="Due Date" required>
+            </div>
+            <div class="mb-3">
+                <input type="number" id="fine" class="form-control" placeholder="Fine (in Rupees)" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Book</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadBooks);
+
+        function loadBooks() {
+            fetch('/api/books')
+                .then(response => response.json())
+                .then(books => {
+                    const bookList = document.getElementById('book-list');
+                    bookList.innerHTML = '<table class="table table-bordered table-hover"><thead><tr><th>ID</th><th>Title</th><th>Author</th><th>Due Date</th><th>Fine (₹)</th><th>Actions</th></tr></thead><tbody>';
+                    books.forEach(book => {
+                        const bookItem = `<tr>
+                            <td>${book.id}</td>
+                            <td>${book.title}</td>
+                            <td>${book.author}</td>
+                            <td>${book.due}</td>
+                            <td>${book.fine}</td>
+                            <td><button class="btn btn-danger btn-sm" onclick="deleteBook(${book.id})"><i class="fas fa-trash-alt"></i> Delete</button></td>
+                        </tr>`;
+                        bookList.innerHTML += bookItem;
+                    });
+                    bookList.innerHTML += '</tbody></table>';
+                });
+        }
+
+        document.getElementById('book-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+            const due = document.getElementById('due').value;
+            const fine = document.getElementById('fine').value;
+            const newBook = { id: Date.now(), title, author, due, fine: parseInt(fine) };
+
+            fetch('/api/books', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newBook)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadBooks();
+                document.getElementById('book-form').reset();
+            });
+        });
+
+        function deleteBook(bookId) {
+            fetch(`/api/books/${bookId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadBooks();
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
